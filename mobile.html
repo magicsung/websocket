@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <title>Websocket | Mobile</title>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css" integrity="sha384-1q8mTJOASx8j1Au+a5WDVnPi2lkFfwwEAa8hDDdjZlpLegxhjVME1fgjWPGmkzs7" crossorigin="anonymous">
+    <meta name="viewport" content="width=device-width; initial-scale=1.0; maximum-scale=1.0; user-scalable=0;">
+  </head>
+  <body>
+    <form class="form-group text-center" id="verify-input" action="">
+      <br>
+      <input class="form-control input-lg" id="m" type="number" placeholder="輸入PC端網頁上的手機配對碼" autofocus>
+      <br>
+      <button class="btn btn-primary btn-lg">Send</button>
+    </form>
+
+    <div class="text-center">
+      <h1 id="verify-message"></h1>
+    </div>
+
+    <script src="https://cdn.socket.io/socket.io-1.2.0.js"></script>
+    <script src="http://code.jquery.com/jquery-1.11.1.js"></script>
+    <script>
+      var socket = io();
+      var channel = 'chat message';
+      var code;
+      $('form').submit(function(){
+        $('#er').text("");
+        code = $('#m').val();
+        socket.emit('ask_channel', code);
+        setTimeout(function(){
+          if(code !== channel) $('#verify-message').text("手機配對碼錯誤，請重新輸入");
+        },1000);
+        return false;
+      });
+
+      socket.on('answer_channel',function(msg){
+        if(code == msg) channel = code;
+        $('#verify-message').html("配對成功! <br><img src='/img/rotate.png'>");
+        $("#verify-input").hide();
+      });
+
+      var angle;
+      window.addEventListener("orientationchange", function() {
+        var msg = {
+            orientation:window.orientation,
+            play     :'start',
+            room     :channel
+          };
+          if(angle !== msg.orientation){
+            angle = msg.orientation;
+            (msg.orientation < 0)? msg.play = 'start' : msg.play = 'stop';
+            socket.emit('linked', msg);
+          }
+      }, false);
+    </script>
+  </body>
+</html>
